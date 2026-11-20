@@ -52,7 +52,7 @@ const context = {
 };
 const source = fs.readFileSync('index.html', 'utf8');
 const js = source.slice(source.indexOf('<script>') + 8, source.indexOf('</script>'));
-new vm.Script(`${js}\nglobalThis.game = { get state(){return state}, set state(value){state=value}, categories, values, TARGET_SCORE, MAX_SCORE, blankState, openQuestion, stopTimer, finishQuestion, renderWinner, restore, hashHostCode };`).runInNewContext(context);
+new vm.Script(`${js}\nglobalThis.game = { get state(){return state}, set state(value){state=value}, categories, values, TARGET_SCORE, MAX_SCORE, blankState, openQuestion, stopTimer, finishQuestion, renderGoalProgress, renderWinner, restore, hashHostCode };`).runInNewContext(context);
 
 assert.equal(context.game.categories.length, 5);
 assert.equal(context.game.categories.reduce((n, c) => n + c.questions.length, 0), 25);
@@ -71,13 +71,16 @@ elements.get('hostCodeSetup').value = 'Code5';
 elements.get('launchBtn').click();
 assert.equal(context.game.state.teams.length, 1);
 assert.equal(context.game.state.teams[0].name, 'Команда студентов');
+assert.equal(elements.get('goalCallout').classList.contains('hidden'), false, 'Goal should stay visible after the game starts');
 
 const tile = { disabled: false, dataset: { ci: '0', qi: '0' } };
 elements.get('board').onclick({ target: { closest: () => tile } });
 assert.equal(JSON.stringify(context.game.state.question), '[0,0]');
+assert.equal(elements.get('goalCallout').classList.contains('hidden'), false, 'Goal should remain visible while the question is open');
 assert.equal(elements.get('hostAuthModal')?.classList.contains('show') ?? false, false, 'Code entered at game start should unlock the whole party');
 assert.equal(context.game.state.timer, 20);
 assert.equal(context.game.state.timerRunning, true);
+assert.match(elements.get('goalProgress').textContent, /Набрано 0 из 4\s?500 баллов/);
 assert.equal(elements.get('answerText').textContent, '', 'Answer must stay absent from the visible DOM before host reveal');
 
 [...intervals.values()][0]();
@@ -93,6 +96,7 @@ assert.equal(elements.get('answerText').textContent, 'Биотехнология
 elements.get('correctBtn').click();
 assert.equal(context.game.state.teams[0].score, 100);
 assert.equal(context.game.state.used.includes('0-0'), true);
+assert.match(elements.get('goalProgress').textContent, /Набрано 100 из 4\s?500 баллов/);
 
 elements.get('lockHostBtn').click();
 assert.ok(elements.get('lockHostBtn').textContent.includes('Войти ведущим'));
@@ -129,4 +133,4 @@ context.game.state.teams[0].score = 4500;
 context.game.renderWinner();
 assert.equal(elements.get('winnerTitle').textContent, 'Победа!');
 assert.match(elements.get('winnerMessage').textContent, /достигли цели 4\s?500/);
-console.log('OK: правила победы при 4500 баллах, одна команда, однократный вход ведущего, блокировка, таймер, начисление очков и сохранение.');
+console.log('OK: цель и прогресс на экране, правила победы при 4500 баллах, одна команда, вход ведущего, блокировка, таймер и сохранение.');
