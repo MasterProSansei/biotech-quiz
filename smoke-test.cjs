@@ -61,15 +61,16 @@ assert.ok(!source.includes('addTeamBtn'));
 
 elements.get('startBtn').click();
 assert.equal(elements.get('teamFields').children.length, 1);
-elements.get('hostCodeSetup').value = 'short';
+assert.equal(elements.get('hostCodeSetup').value, '');
+elements.get('hostCodeSetup').value = 'ерна';
 elements.get('launchBtn').click();
 assert.equal(context.game.state, null, 'Game must not start without a strong enough host code');
-elements.get('hostCodeSetup').value = 'SecretHost42';
+elements.get('hostCodeSetup').value = 'Code5';
 elements.get('launchBtn').click();
 assert.equal(context.game.state.teams.length, 1);
 assert.equal(context.game.state.teams[0].name, 'Команда студентов');
 
-const authorize = (buttonId, code = 'SecretHost42') => {
+const authorize = (buttonId, code = 'Code5') => {
   elements.get(buttonId).click();
   assert.ok(elements.get('hostAuthModal').classList.contains('show'));
   elements.get('hostAuthInput').value = code;
@@ -82,7 +83,7 @@ assert.equal(context.game.state.question, null, 'Question selection must require
 elements.get('hostAuthInput').value = 'wrong-code';
 elements.get('hostAuthConfirm').click();
 assert.equal(context.game.state.question, null);
-elements.get('hostAuthInput').value = 'SecretHost42';
+elements.get('hostAuthInput').value = 'Code5';
 elements.get('hostAuthConfirm').click();
 assert.equal(JSON.stringify(context.game.state.question), '[0,0]');
 assert.equal(context.game.state.timer, 20);
@@ -93,7 +94,7 @@ assert.equal(elements.get('answerText').textContent, '', 'Answer must stay absen
 assert.equal(context.game.state.timer, 19);
 authorize('timerToggle', 'wrong-code');
 assert.equal(context.game.state.timerRunning, true, 'Wrong code must not pause the timer');
-elements.get('hostAuthInput').value = 'SecretHost42';
+elements.get('hostAuthInput').value = 'Code5';
 elements.get('hostAuthConfirm').click();
 assert.equal(context.game.state.timerRunning, false);
 
@@ -106,7 +107,7 @@ assert.equal(context.game.state.used.includes('0-0'), true);
 
 const secondTile = { disabled: false, dataset: { ci: '0', qi: '1' } };
 elements.get('board').onclick({ target: { closest: () => secondTile } });
-elements.get('hostAuthInput').value = 'SecretHost42';
+elements.get('hostAuthInput').value = 'Code5';
 elements.get('hostAuthConfirm').click();
 authorize('revealBtn');
 authorize('incorrectBtn');
