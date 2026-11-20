@@ -52,10 +52,12 @@ const context = {
 };
 const source = fs.readFileSync('index.html', 'utf8');
 const js = source.slice(source.indexOf('<script>') + 8, source.indexOf('</script>'));
-new vm.Script(`${js}\nglobalThis.game = { get state(){return state}, set state(value){state=value}, categories, blankState, openQuestion, stopTimer, finishQuestion, restore, hashHostCode };`).runInNewContext(context);
+new vm.Script(`${js}\nglobalThis.game = { get state(){return state}, set state(value){state=value}, categories, values, TARGET_SCORE, MAX_SCORE, blankState, openQuestion, stopTimer, finishQuestion, renderWinner, restore, hashHostCode };`).runInNewContext(context);
 
 assert.equal(context.game.categories.length, 5);
 assert.equal(context.game.categories.reduce((n, c) => n + c.questions.length, 0), 25);
+assert.equal(context.game.TARGET_SCORE, 4500);
+assert.equal(context.game.MAX_SCORE, 7500);
 assert.equal((source.match(/id="teamFields"/g) || []).length, 1);
 assert.ok(!source.includes('addTeamBtn'));
 
@@ -118,4 +120,13 @@ assert.equal(context.game.state.teams.length, 1);
 assert.equal(context.game.state.teams[0].name, 'Первая команда');
 assert.equal(context.game.state.teams[0].score, 400);
 assert.equal(context.game.state.turn, 0);
-console.log('OK: одна команда, однократный вход ведущего, блокировка, скрытие ответа, таймер, начисление очков и миграция сохранения.');
+context.game.state = { ...context.game.blankState(['Команда студентов']), used: Array(25).fill('x'), screen: 'winner' };
+context.game.state.teams[0].score = 4499;
+context.game.renderWinner();
+assert.equal(elements.get('winnerTitle').textContent, 'Цель не достигнута');
+assert.match(elements.get('winnerMessage').textContent, /не хватило 1/);
+context.game.state.teams[0].score = 4500;
+context.game.renderWinner();
+assert.equal(elements.get('winnerTitle').textContent, 'Победа!');
+assert.match(elements.get('winnerMessage').textContent, /достигли цели 4\s?500/);
+console.log('OK: правила победы при 4500 баллах, одна команда, однократный вход ведущего, блокировка, таймер, начисление очков и сохранение.');
